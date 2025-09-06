@@ -7,6 +7,8 @@ import { api } from '../services/api';
 import { RootStackParamList } from '../types/navigation';
 import { Pool, User, Contribution } from '../types/index';
 import { ApplePayButton } from '../components/ApplePayButton';
+import { AICoachCard } from '../components/AICoachCard';
+import { ProgressVisualization } from '../components/ProgressVisualization';
 // import io from 'socket.io-client'; // Removed - not needed for MVP
 
 const SERVER = process.env.EXPO_PUBLIC_SERVER_URL || 'http://localhost:4000';
@@ -201,29 +203,17 @@ export default function PoolDetail({ navigation, route }: Props): React.JSX.Elem
   return (
     <ScrollView style={{ flex:1, backgroundColor: '#FAFCFF' }}>
       <View style={{ padding: 24 }}>
-        {/* Pool Header */}
-        <View style={{ backgroundColor: 'white', padding: 20, borderRadius: radius.medium, marginBottom: 16 }}>
-          <Text style={{ fontSize:24, fontWeight:'800', color: colors.text }}>{pool.name}</Text>
-          {pool.destination && (
-            <Text style={{ fontSize: 16, color: colors.blue, marginTop: 4 }}>🌍 {pool.destination}</Text>
-          )}
-          {pool.trip_date && (
-            <Text style={{ fontSize: 14, color: '#666', marginTop: 2 }}>📅 {pool.trip_date}</Text>
-          )}
-          
-          <View style={{ height:12, backgroundColor:'#e6eef7', borderRadius:8, overflow:'hidden', marginTop:12 }}>
-            <View style={{ width:`${pct}%`, backgroundColor: colors.green, height:'100%' }} />
-          </View>
-          <Text style={{ marginTop:6, color:'#556' }}>
-            ${(pool.saved_cents/100).toFixed(2)} of ${(pool.goal_cents/100).toFixed(2)} • {pct}%
-          </Text>
-          
-          {pool.bonus_pot_cents > 0 && (
-            <Text style={{ marginTop: 8, color: colors.purple, fontWeight: '600' }}>
-              🎁 Bonus Pot: ${(pool.bonus_pot_cents/100).toFixed(2)}
-            </Text>
-          )}
-        </View>
+        {/* AI-Enhanced Progress Visualization */}
+        <ProgressVisualization pool={pool} />
+
+        {/* AI Coach Card */}
+        <AICoachCard 
+          pool={pool} 
+          recentContributions={[]}
+          onActionPress={(action) => {
+            Alert.alert('AI Coach', `Action: ${action}`);
+          }}
+        />
 
         {/* Savings Calculator */}
         {(() => {
