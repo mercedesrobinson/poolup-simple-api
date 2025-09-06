@@ -6,6 +6,7 @@ import { colors, radius } from '../theme';
 import { api } from '../services/api';
 import { RootStackParamList } from '../types/navigation';
 import { Pool, User, Contribution } from '../types/index';
+import { ApplePayButton } from '../components/ApplePayButton';
 // import io from 'socket.io-client'; // Removed - not needed for MVP
 
 const SERVER = process.env.EXPO_PUBLIC_SERVER_URL || 'http://localhost:4000';
@@ -298,7 +299,7 @@ export default function PoolDetail({ navigation, route }: Props): React.JSX.Elem
                 backgroundColor: paymentMethod === 'manual' ? colors.blue : '#f0f0f0',
                 padding: 12, 
                 borderRadius: radius.medium, 
-                marginRight: 8,
+                marginRight: 4,
                 alignItems: 'center'
               }}
             >
@@ -313,7 +314,7 @@ export default function PoolDetail({ navigation, route }: Props): React.JSX.Elem
                 backgroundColor: paymentMethod === 'debit_card' ? colors.blue : '#f0f0f0',
                 padding: 12, 
                 borderRadius: radius.medium, 
-                marginLeft: 8,
+                marginHorizontal: 4,
                 alignItems: 'center'
               }}
             >
@@ -321,20 +322,59 @@ export default function PoolDetail({ navigation, route }: Props): React.JSX.Elem
                 💳 Card
               </Text>
             </TouchableOpacity>
-          </View>
-
-          <View style={{ flexDirection:'row', gap:12, alignItems:'center' }}>
-            <TextInput 
-              value={amount} 
-              onChangeText={setAmount} 
-              keyboardType="numeric" 
-              style={{ flex:1, backgroundColor:'#f5f7fb', padding:14, borderRadius: radius.medium }} 
-              placeholder="25"
-            />
-            <TouchableOpacity onPress={contribute} style={{ backgroundColor: colors.blue, paddingVertical:14, paddingHorizontal:18, borderRadius: radius.medium }}>
-              <Text style={{ color:'white', fontWeight:'700' }}>Contribute</Text>
+            <TouchableOpacity 
+              onPress={() => setPaymentMethod('apple_pay')}
+              style={{ 
+                flex: 1, 
+                backgroundColor: paymentMethod === 'apple_pay' ? colors.blue : '#f0f0f0',
+                padding: 12, 
+                borderRadius: radius.medium, 
+                marginLeft: 4,
+                alignItems: 'center'
+              }}
+            >
+              <Text style={{ color: paymentMethod === 'apple_pay' ? 'white' : colors.text, fontWeight: '600' }}>
+                🍎 Pay
+              </Text>
             </TouchableOpacity>
           </View>
+
+          {paymentMethod === 'apple_pay' ? (
+            <View style={{ marginBottom: 12 }}>
+              <TextInput 
+                value={amount} 
+                onChangeText={setAmount} 
+                keyboardType="numeric" 
+                style={{ backgroundColor:'#f5f7fb', padding:14, borderRadius: radius.medium, marginBottom: 12 }} 
+                placeholder="25"
+              />
+              <ApplePayButton
+                amount={parseFloat(amount) || 0}
+                poolId={poolId}
+                onSuccess={() => {
+                  setAmount('');
+                  load();
+                }}
+                onError={(error) => {
+                  Alert.alert('Payment Failed', error);
+                }}
+                style={{ width: '100%' }}
+              />
+            </View>
+          ) : (
+            <View style={{ flexDirection:'row', gap:12, alignItems:'center' }}>
+              <TextInput 
+                value={amount} 
+                onChangeText={setAmount} 
+                keyboardType="numeric" 
+                style={{ flex:1, backgroundColor:'#f5f7fb', padding:14, borderRadius: radius.medium }} 
+                placeholder="25"
+              />
+              <TouchableOpacity onPress={contribute} style={{ backgroundColor: colors.blue, paddingVertical:14, paddingHorizontal:18, borderRadius: radius.medium }}>
+                <Text style={{ color:'white', fontWeight:'700' }}>Contribute</Text>
+              </TouchableOpacity>
+            </View>
+          )}
           
           <Text style={{ fontSize: 12, color: '#666', marginTop: 8, textAlign: 'center' }}>
             💡 Contribute early in the week for bonus points!

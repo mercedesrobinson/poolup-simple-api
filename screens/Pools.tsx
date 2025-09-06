@@ -170,9 +170,15 @@ export default function Pools({ navigation, route }: any){
   const getSavingsEquivalent = (amount) => {
     const amountInDollars = amount / 100;
     const equivalents = [
+      { threshold: 8000, text: `1 luxury trip to Medellin, Colombia`, icon: '🇨🇴' },
+      { threshold: 6000, text: `1 week in Costa Rica paradise`, icon: '🌴' },
       { threshold: 5000, text: `1 epic European adventure`, icon: '✈️' },
-      { threshold: 3000, text: `${Math.floor(amountInDollars / 500)} round-trip flights to Japan`, icon: '🇯🇵' },
-      { threshold: 2000, text: `${Math.floor(amountInDollars / 500)} round-trip flights to Mexico`, icon: '🇲🇽' },
+      { threshold: 4000, text: `1 weekend in Napa Valley wine country`, icon: '🍷' },
+      { threshold: 3500, text: `1 long weekend in Las Vegas`, icon: '🎰' },
+      { threshold: 3000, text: `${Math.floor(amountInDollars / 600)} round-trip flights to Japan`, icon: '🇯🇵' },
+      { threshold: 2500, text: `1 romantic getaway to Cartagena`, icon: '🏰' },
+      { threshold: 2000, text: `${Math.floor(amountInDollars / 400)} flights to LA`, icon: '🌴' },
+      { threshold: 1500, text: `${Math.floor(amountInDollars / 500)} flights to Mexico`, icon: '🇲🇽' },
       { threshold: 1000, text: `${Math.floor(amountInDollars / 200)} weekend getaways`, icon: '🏖️' },
       { threshold: 500, text: `${Math.floor(amountInDollars / 150)} concert tickets`, icon: '🎵' },
       { threshold: 200, text: `${Math.floor(amountInDollars / 50)} fancy dinners`, icon: '🍽️' },

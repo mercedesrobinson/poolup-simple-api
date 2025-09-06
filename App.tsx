@@ -4,6 +4,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, TouchableOpacity } from 'react-native';
+import { StripeProvider } from '@stripe/stripe-react-native';
+import { STRIPE_PUBLISHABLE_KEY } from './services/stripe';
 
 // Import screens
 import Onboarding from './screens/Onboarding';
@@ -154,41 +156,43 @@ function MainTabs(): React.JSX.Element {
 
 export default function App(): React.JSX.Element {
   return (
-    <NavigationContainer>
-      <StatusBar style="auto" />
-      <Stack.Navigator initialRouteName="Onboarding" screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Onboarding" component={Onboarding} />
-        <Stack.Screen name="MainTabs" component={MainTabs} />
-        <Stack.Screen name="CreatePool" component={CreatePool} />
-        <Stack.Screen name="Leaderboard" component={Leaderboard} />
-        <Stack.Screen name="Badges" component={Badges} />
-        <Stack.Screen name="ExpenseSplitting" component={ExpenseSplitting} />
-        <Stack.Screen name="ProgressVisualization" component={ProgressVisualization} />
-        <Stack.Screen name="Notifications" component={Notifications} />
-        <Stack.Screen name="FriendsFeed" component={FriendsFeed} />
-        <Stack.Screen name="InviteFriends" component={InviteFriends} />
-        <Stack.Screen name="GroupManagement" component={GroupManagement} />
-        <Stack.Screen name="PrivacySettings" component={PrivacySettings} />
-        <Stack.Screen name="TransactionHistory" component={TransactionHistory} />
-        <Stack.Screen name="SavingsSummary" component={SavingsSummary} />
-        <Stack.Screen name="PenaltySettings" component={PenaltySettings} />
-        <Stack.Screen name="RecurringPayments" component={RecurringPayments} />
-        <Stack.Screen name="AccountabilityPartners" component={AccountabilityPartners} />
-        <Stack.Screen name="ProfilePhotoUpload" component={ProfilePhotoUpload} />
-        <Stack.Screen name="PaymentMethods" component={PaymentMethods} />
-        <Stack.Screen name="LinkPaymentMethod" component={LinkPaymentMethod} options={{ headerShown: false }} />
-        <Stack.Screen name="PeerTransfer" component={PeerTransfer} options={{ headerShown: false }} />
-        <Stack.Screen name="ContributionSettings" component={ContributionSettings} options={{ headerShown: false }} />
-        <Stack.Screen name="SoloGoalPrivacy" component={SoloGoalPrivacy} options={{ headerShown: false }} />
-        <Stack.Screen name="NotificationSettings" component={NotificationSettings} />
-        <Stack.Screen name="GroupActivity" component={GroupActivity} />
-        <Stack.Screen name="PremiumUpgrade" component={PremiumUpgrade} />
-        <Stack.Screen name="ProgressSharingSimple" component={ProgressSharingSimple} />
-        <Stack.Screen name="SoloSavings" component={SoloSavings} />
-        <Stack.Screen name="Settings" component={Settings} />
-        <Stack.Screen name="Pools" component={Pools} />
-        <Stack.Screen name="SocialProofSimple" component={SocialProofSimple} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY}>
+      <NavigationContainer>
+        <StatusBar style="auto" />
+        <Stack.Navigator initialRouteName="Onboarding" screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Onboarding" component={Onboarding} />
+          <Stack.Screen name="MainTabs" component={MainTabs} />
+          <Stack.Screen name="CreatePool" component={CreatePool} />
+          <Stack.Screen name="Leaderboard" component={Leaderboard} />
+          <Stack.Screen name="Badges" component={Badges} />
+          <Stack.Screen name="ExpenseSplitting" component={ExpenseSplitting} />
+          <Stack.Screen name="ProgressVisualization" component={ProgressVisualization} />
+          <Stack.Screen name="Notifications" component={Notifications} />
+          <Stack.Screen name="FriendsFeed" component={FriendsFeed} />
+          <Stack.Screen name="InviteFriends" component={InviteFriends} />
+          <Stack.Screen name="GroupManagement" component={GroupManagement} />
+          <Stack.Screen name="PrivacySettings" component={PrivacySettings} />
+          <Stack.Screen name="TransactionHistory" component={TransactionHistory} />
+          <Stack.Screen name="SavingsSummary" component={SavingsSummary} />
+          <Stack.Screen name="PenaltySettings" component={PenaltySettings} />
+          <Stack.Screen name="RecurringPayments" component={RecurringPayments} />
+          <Stack.Screen name="AccountabilityPartners" component={AccountabilityPartners} />
+          <Stack.Screen name="ProfilePhotoUpload" component={ProfilePhotoUpload} />
+          <Stack.Screen name="PaymentMethods" component={PaymentMethods} />
+          <Stack.Screen name="LinkPaymentMethod" component={LinkPaymentMethod} options={{ headerShown: false }} />
+          <Stack.Screen name="PeerTransfer" component={PeerTransfer} options={{ headerShown: false }} />
+          <Stack.Screen name="ContributionSettings" component={ContributionSettings} options={{ headerShown: false }} />
+          <Stack.Screen name="SoloGoalPrivacy" component={SoloGoalPrivacy} options={{ headerShown: false }} />
+          <Stack.Screen name="NotificationSettings" component={NotificationSettings} />
+          <Stack.Screen name="GroupActivity" component={GroupActivity} />
+          <Stack.Screen name="PremiumUpgrade" component={PremiumUpgrade} />
+          <Stack.Screen name="ProgressSharingSimple" component={ProgressSharingSimple} />
+          <Stack.Screen name="SoloSavings" component={SoloSavings} />
+          <Stack.Screen name="Settings" component={Settings} />
+          <Stack.Screen name="Pools" component={Pools} />
+          <Stack.Screen name="SocialProofSimple" component={SocialProofSimple} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </StripeProvider>
   );
 }
