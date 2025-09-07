@@ -13,34 +13,70 @@ function StatCard({ title, value, subtitle, color = colors.blue }) {
   );
 }
 
-function BadgeItem({ badge }) {
+function BadgeCard({ badge, earned = true }) {
   const rarityColors = {
-    common: '#95a5a6',
-    uncommon: '#3498db',
-    rare: '#9b59b6',
-    epic: '#e74c3c',
-    legendary: '#f39c12'
+    common: '#4CAF50',
+    uncommon: '#2196F3',
+    rare: '#9C27B0',
+    epic: '#FF5722',
+    legendary: '#FF9800'
   };
+
+  const badgeColor = rarityColors[badge.rarity] || rarityColors.common;
 
   return (
     <View style={{ 
-      backgroundColor: 'white', 
-      padding: 12, 
-      borderRadius: radius.medium, 
+      backgroundColor: earned ? badgeColor + '20' : '#f5f5f5',
+      borderRadius: radius.medium,
+      padding: 16,
+      alignItems: 'center',
+      minHeight: 120,
+      flex: 1,
+      marginHorizontal: 4,
       marginBottom: 8,
-      borderLeftWidth: 4,
-      borderLeftColor: rarityColors[badge.rarity] || rarityColors.common
+      borderWidth: 2,
+      borderColor: earned ? badgeColor : '#e0e0e0'
     }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ fontSize: 32, marginRight: 12 }}>{badge.icon}</Text>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{badge.name}</Text>
-          <Text style={{ fontSize: 14, color: '#666', marginTop: 2 }}>{badge.description}</Text>
-          <Text style={{ fontSize: 12, color: rarityColors[badge.rarity], marginTop: 4, textTransform: 'uppercase', fontWeight: '600' }}>
-            {badge.rarity}
-          </Text>
+      {earned && (
+        <View style={{
+          position: 'absolute',
+          top: 8,
+          right: 8,
+          backgroundColor: colors.green,
+          borderRadius: 10,
+          width: 20,
+          height: 20,
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <Text style={{ color: 'white', fontSize: 12, fontWeight: '700' }}>✓</Text>
         </View>
-      </View>
+      )}
+      
+      <Text style={{ fontSize: 32, marginBottom: 8 }}>{badge.icon}</Text>
+      
+      <Text style={{ 
+        fontSize: 14, 
+        fontWeight: '700', 
+        color: colors.text, 
+        textAlign: 'center',
+        marginBottom: 4
+      }}>
+        {badge.name}
+      </Text>
+      
+      <Text style={{ 
+        fontSize: 10, 
+        color: badgeColor, 
+        textTransform: 'uppercase', 
+        fontWeight: '700',
+        backgroundColor: badgeColor + '40',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 8
+      }}>
+        {badge.rarity || 'COMMON'}
+      </Text>
     </View>
   );
 }
@@ -184,59 +220,232 @@ export default function Profile({ navigation, route }: any) {
   const showProfile = () => {
     return (
       <ScrollView style={{ flex: 1, backgroundColor: '#FAFCFF' }}>
+        {/* Hero Header with Gradient */}
         <View style={{
-          backgroundColor: 'white',
-          padding: 20,
+          backgroundColor: colors.primary,
+          padding: 24,
+          paddingTop: 80,
           alignItems: 'center',
-          borderBottomWidth: 1,
-          borderBottomColor: '#e9ecef',
+          position: 'relative'
         }}>
+          {/* Decorative elements */}
           <View style={{
-            width: 80,
-            height: 80,
-            borderRadius: 40,
-            backgroundColor: colors.primary,
+            position: 'absolute',
+            top: 60,
+            right: 20,
+            opacity: 0.1
+          }}>
+            <Text style={{ fontSize: 60, color: 'white' }}>🎯</Text>
+          </View>
+          <View style={{
+            position: 'absolute',
+            top: 120,
+            left: 30,
+            opacity: 0.1
+          }}>
+            <Text style={{ fontSize: 40, color: 'white' }}>💰</Text>
+          </View>
+          
+          <View style={{
+            width: 90,
+            height: 90,
+            borderRadius: 45,
+            backgroundColor: 'rgba(255,255,255,0.25)',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: 12,
+            marginBottom: 16,
+            borderWidth: 3,
+            borderColor: 'rgba(255,255,255,0.3)'
           }}>
-            <Text style={{ fontSize: 32, color: 'white' }}>
+            <Text style={{ fontSize: 36, color: 'white' }}>
               {displayProfile.name.charAt(0).toUpperCase()}
             </Text>
           </View>
-          <Text style={{ fontSize: 24, fontWeight: '700', color: '#333', marginBottom: 4 }}>
+          
+          <Text style={{ fontSize: 26, fontWeight: '800', color: 'white', marginBottom: 6 }}>
             {displayProfile.name}
           </Text>
-          <Text style={{ fontSize: 16, color: '#666' }}>
-            {displayProfile.email}
+          
+          <View style={{
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 16,
+            marginBottom: 8
+          }}>
+            <Text style={{ fontSize: 14, color: 'white', fontWeight: '600' }}>
+              Level 3 Saver 🌟
+            </Text>
+          </View>
+          
+          <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)' }}>
+            Member since Jan 2024
           </Text>
         </View>
 
         <View style={{ padding: 16 }}>
-          <ProfileOption
-            icon="💰"
-            title="My Pools"
-            subtitle="View your savings goals"
-            onPress={() => navigation.navigate("Pools" as any, { user: displayProfile })}
-          />
-          <ProfileOption
-            icon="💳"
-            title="Debit Card"
-            subtitle="Manage your PoolUp card"
-            onPress={() => navigation.navigate("DebitCard" as any, { user: displayProfile })}
-          />
-          <ProfileOption
-            icon="🏆"
-            title="Badges"
-            subtitle="View your achievements"
-            onPress={() => navigation.navigate("Badges" as any, { user: displayProfile })}
-          />
-          <ProfileOption
-            icon="⚙️"
-            title="Settings"
-            subtitle="App preferences"
-            onPress={() => navigation.navigate("Settings" as any, { user: displayProfile })}
-          />
+          {/* Achievement Stats with Visual Flair */}
+          <View style={{ 
+            backgroundColor: 'white', 
+            borderRadius: radius.medium, 
+            padding: 20,
+            marginBottom: 16,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 3
+          }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 16, textAlign: 'center' }}>
+              🎉 Your Achievements
+            </Text>
+            
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+              <View style={{ alignItems: 'center' }}>
+                <View style={{
+                  backgroundColor: colors.primary + '20',
+                  borderRadius: 30,
+                  width: 60,
+                  height: 60,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 8
+                }}>
+                  <Text style={{ fontSize: 24, fontWeight: '800', color: colors.primary }}>3</Text>
+                </View>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>Active</Text>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>Pools</Text>
+              </View>
+              
+              <View style={{ alignItems: 'center' }}>
+                <View style={{
+                  backgroundColor: colors.coral + '20',
+                  borderRadius: 30,
+                  width: 60,
+                  height: 60,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 8
+                }}>
+                  <Text style={{ fontSize: 20 }}>🔥</Text>
+                </View>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>14 Day</Text>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>Streak</Text>
+              </View>
+              
+              <View style={{ alignItems: 'center' }}>
+                <View style={{
+                  backgroundColor: colors.green + '20',
+                  borderRadius: 30,
+                  width: 60,
+                  height: 60,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 8
+                }}>
+                  <Text style={{ fontSize: 24, fontWeight: '800', color: colors.green }}>2</Text>
+                </View>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>Badges</Text>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>Earned</Text>
+              </View>
+              
+              <View style={{ alignItems: 'center' }}>
+                <View style={{
+                  backgroundColor: colors.purple + '20',
+                  borderRadius: 30,
+                  width: 60,
+                  height: 60,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 8
+                }}>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: colors.purple }}>$2.1k</Text>
+                </View>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>Total</Text>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>Saved</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Quick Actions Grid */}
+          <View style={{ marginBottom: 16 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 12 }}>
+              ⚡ Quick Actions
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Pools" as any, { user: displayProfile })}
+                style={{
+                  backgroundColor: colors.primary + '15',
+                  borderRadius: radius.medium,
+                  padding: 16,
+                  width: '48%',
+                  alignItems: 'center',
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: colors.primary + '30'
+                }}
+              >
+                <Text style={{ fontSize: 32, marginBottom: 8 }}>💰</Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>My Pools</Text>
+                <Text style={{ fontSize: 11, color: '#666', textAlign: 'center' }}>View savings goals</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                onPress={() => navigation.navigate("DebitCard" as any, { user: displayProfile })}
+                style={{
+                  backgroundColor: colors.green + '15',
+                  borderRadius: radius.medium,
+                  padding: 16,
+                  width: '48%',
+                  alignItems: 'center',
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: colors.green + '30'
+                }}
+              >
+                <Text style={{ fontSize: 32, marginBottom: 8 }}>💳</Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>Debit Card</Text>
+                <Text style={{ fontSize: 11, color: '#666', textAlign: 'center' }}>Manage your card</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Badges" as any, { user: displayProfile })}
+                style={{
+                  backgroundColor: colors.coral + '15',
+                  borderRadius: radius.medium,
+                  padding: 16,
+                  width: '48%',
+                  alignItems: 'center',
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: colors.coral + '30'
+                }}
+              >
+                <Text style={{ fontSize: 32, marginBottom: 8 }}>🏆</Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>Badges</Text>
+                <Text style={{ fontSize: 11, color: '#666', textAlign: 'center' }}>View achievements</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Settings" as any, { user: displayProfile })}
+                style={{
+                  backgroundColor: colors.blue + '15',
+                  borderRadius: radius.medium,
+                  padding: 16,
+                  width: '48%',
+                  alignItems: 'center',
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: colors.blue + '30'
+                }}
+              >
+                <Text style={{ fontSize: 32, marginBottom: 8 }}>⚙️</Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>Settings</Text>
+                <Text style={{ fontSize: 11, color: '#666', textAlign: 'center' }}>App preferences</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </ScrollView>
     );
@@ -356,23 +565,61 @@ export default function Profile({ navigation, route }: any) {
 
         {/* Badges Section */}
         <View style={{ backgroundColor: 'white', padding: 16, borderRadius: radius.medium, marginBottom: 16 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text }}>
-              🏆 Badges ({badges.length})
-            </Text>
-            <TouchableOpacity onPress={() => navigation.navigate("Badges" as any, { user, badges })}>
-              <Text style={{ color: colors.blue, fontWeight: '600' }}>View All →</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ fontSize: 20, marginRight: 8 }}>🏆</Text>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text }}>
+                Your Badges
+              </Text>
+            </View>
+            <TouchableOpacity 
+              onPress={() => navigation.navigate("Badges" as any, { user, badges })}
+              style={{
+                backgroundColor: colors.blue + '20',
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 16
+              }}
+            >
+              <Text style={{ color: colors.blue, fontWeight: '600', fontSize: 12 }}>View All →</Text>
             </TouchableOpacity>
           </View>
-          {badges.slice(0, 3).map(badge => (
-            <BadgeItem key={badge.id} badge={badge} />
-          ))}
-          {badges.length === 0 && (
-          <Text style={{ color: '#666', textAlign: 'center', padding: 20 }}>
-            No badges yet. Start contributing to earn your first badge! 🎯
+          
+          <Text style={{ 
+            fontSize: 14, 
+            color: '#666', 
+            marginBottom: 12,
+            textAlign: 'center'
+          }}>
+            {badges.length}/12 Earned
           </Text>
-        )}
-      </View>
+          
+          {badges.length > 0 ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+              {badges.slice(0, 2).map(badge => (
+                <BadgeCard key={badge.id} badge={badge} earned={true} />
+              ))}
+            </View>
+          ) : (
+            <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+              <View style={{
+                backgroundColor: '#f5f5f5',
+                borderRadius: radius.medium,
+                padding: 20,
+                alignItems: 'center',
+                borderWidth: 2,
+                borderColor: '#e0e0e0',
+                borderStyle: 'dashed'
+              }}>
+                <Text style={{ fontSize: 48, marginBottom: 12, opacity: 0.5 }}>🎯</Text>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 4 }}>No badges yet</Text>
+                <Text style={{ fontSize: 12, color: '#666', textAlign: 'center' }}>
+                  Complete your first goal to earn badges!
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
 
       {/* Savings Summary */}
       <View style={{ backgroundColor: 'white', padding: 16, borderRadius: radius.medium, marginBottom: 16 }}>
