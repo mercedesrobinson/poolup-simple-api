@@ -6,6 +6,7 @@ import { api } from '../services/api';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../App';
+import { useUser } from '../contexts/UserContext';
 
 type BadgesNavigationProp = StackNavigationProp<RootStackParamList, 'Badges'>;
 type BadgesRouteProp = RouteProp<RootStackParamList, 'Badges'>;
@@ -21,7 +22,7 @@ interface Badge {
   description: string;
   icon: string;
   category: string;
-  points_required: number;
+  points_required?: number;
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
   earned_at?: string;
 }
@@ -93,52 +94,90 @@ function BadgeCard({ badge, earned = false }: BadgeCardProps): React.JSX.Element
 }
 
 export default function Badges({ navigation, route }: Props): React.JSX.Element {
-  const { user } = (route?.params as any) || {};
-  
-  if (!user) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>Loading user data...</Text>
-      </View>
-    );
-  }
-  const [earnedBadges, setEarnedBadges] = useState<Badge[]>([]);
-  const [allBadges, setAllBadges] = useState<Badge[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  const loadBadges = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      // Use the BadgeSystem directly to avoid API errors
-      const allSystemBadges = BadgeSystem.getAllBadges();
-      
-      // Mark first 2 badges as earned for demo
-      const badgesWithEarnedStatus = allSystemBadges.map((badge, index) => ({
-        ...badge,
-        points_required: badge.requirement, // Map requirement to points_required for compatibility
-        category: badge.category === 'invite' ? 'social' : badge.category, // Map invite to social
-        earned: index < 2,
-        earnedAt: index < 2 ? new Date().toISOString() : undefined
-      }));
-      
-      setAllBadges(badgesWithEarnedStatus);
-      setEarnedBadges(badgesWithEarnedStatus.filter(b => b.earned));
-      setLoading(false);
-    } catch (error) {
-      console.error('Failed to load badges:', error);
-      setLoading(false);
-    }
-  };
+  const { user } = useUser();
+  const [badges, setBadges] = useState<Badge[]>([]);
+  const [earnedBadges, setEarnedBadges] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadBadges();
   }, []);
 
-  const earnedCount = earnedBadges.length;
-  const totalCount = allBadges.length;
-  const progress = totalCount > 0 ? (earnedCount / totalCount) * 100 : 0;
+  const loadBadges = async () => {
+    try {
+      setError(null);
+      // Load all available badges from BadgeSystem
+      const systemBadges = BadgeSystem.getAllBadges();
+      
+      // Convert system badges to match our interface
+      const allBadges: Badge[] = systemBadges.map(badge => ({
+        ...badge,
+        points_required: (badge as any).points_required || 0
+      }));
+      
+      // Load user's earned badges from API
+      let earnedBadgeIds: string[] = [];
+      if (user?.id) {
+        try {
+          const userBadges = await api.getUserBadges(user.id);
+          // Ensure userBadges is an array before mapping
+          if (Array.isArray(userBadges)) {
+            earnedBadgeIds = userBadges.map(b => b.id);
+          } else {
+            console.warn('getUserBadges returned non-array:', userBadges);
+            earnedBadgeIds = [];
+          }
+        } catch (error) {
+          console.error('Failed to load user badges:', error);
+          // Don't set error state for badges API failure, just continue with empty badges
+          earnedBadgeIds = [];
+        }
+      }
+      
+      setBadges(allBadges);
+      setEarnedBadges(earnedBadgeIds);
+    } catch (error) {
+      console.error('Error loading badges:', error);
+      setError('Failed to load badges');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (loading) return <View style={{ flex: 1, backgroundColor: '#FAFCFF' }} />;
+  useEffect(() => {
+    if (error) {
+      console.error('Error:', error);
+    }
+  }, [error]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#FAFCFF', justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: 18, color: colors.text }}>Loading badges...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#FAFCFF', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <Text style={{ fontSize: 48, marginBottom: 16 }}>⚠️</Text>
+        <Text style={{ fontSize: 18, fontWeight: '600', color: colors.text, marginBottom: 8, textAlign: 'center' }}>Unable to load badges</Text>
+        <Text style={{ fontSize: 14, color: '#666', marginBottom: 16, textAlign: 'center' }}>{error}</Text>
+        <TouchableOpacity 
+          onPress={loadBadges}
+          style={{ backgroundColor: colors.primary, padding: 12, borderRadius: radius.medium }}
+        >
+          <Text style={{ color: 'white', fontWeight: '600' }}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const earnedCount = earnedBadges.length;
+  const totalCount = badges.length;
+  const progress = totalCount > 0 ? (earnedCount / totalCount) * 100 : 0;
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: '#FAFCFF' }}>
@@ -175,19 +214,38 @@ export default function Badges({ navigation, route }: Props): React.JSX.Element 
             <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
               ✨ Your Badges
             </Text>
-            {Array.isArray(earnedBadges) ? earnedBadges.map(badge => (
+            {badges.filter(b => earnedBadges.includes(b.id)).map(badge => (
               <BadgeCard key={badge.id} badge={badge} earned={true} />
-            )) : []}
+            ))}
           </>
         )}
 
-        <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 8, marginTop: earnedCount > 0 ? 16 : 0 }}>
-          🎯 Available Badges
+        {/* Friends Badges */}
+        <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 8, marginTop: earnedCount > 0 ? 24 : 0 }}>
+          👥 Friends & Social
         </Text>
-        {Array.isArray(allBadges) && Array.isArray(earnedBadges) ? 
-          allBadges.filter(b => !earnedBadges.find(eb => eb.id === b.id)).map(badge => (
-            <BadgeCard key={badge.id} badge={badge} earned={false} />
-          )) : []}
+        <View style={{ height: 2, backgroundColor: colors.primary, borderRadius: 1, marginBottom: 12, opacity: 0.3 }} />
+        {badges.filter(b => !earnedBadges.includes(b.id) && b.category === 'friends').map(badge => (
+          <BadgeCard key={badge.id} badge={badge} earned={false} />
+        ))}
+
+        {/* Pool Badges */}
+        <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 8, marginTop: 24 }}>
+          🎯 Pool Goals
+        </Text>
+        <View style={{ height: 2, backgroundColor: colors.green, borderRadius: 1, marginBottom: 12, opacity: 0.3 }} />
+        {badges.filter(b => !earnedBadges.includes(b.id) && b.category === 'pools').map(badge => (
+          <BadgeCard key={badge.id} badge={badge} earned={false} />
+        ))}
+
+        {/* Savings Badges */}
+        <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 8, marginTop: 24 }}>
+          💰 Savings Milestones
+        </Text>
+        <View style={{ height: 2, backgroundColor: colors.orange, borderRadius: 1, marginBottom: 12, opacity: 0.3 }} />
+        {badges.filter(b => !earnedBadges.includes(b.id) && b.category === 'savings').map(badge => (
+          <BadgeCard key={badge.id} badge={badge} earned={false} />
+        ))}
 
         {earnedCount === 0 && (
           <View style={{ backgroundColor: 'white', padding: 24, borderRadius: radius.medium, alignItems: 'center' }}>

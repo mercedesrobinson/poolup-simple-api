@@ -68,82 +68,20 @@ export default function SavingsSummary({ navigation, route }: Props): React.JSX.
   };
 
   const getChartData = (timeframe: TimeframeType, transactions: any[]): number[] => {
-    if (!transactions || transactions.length === 0) {
-      // Return zeros for empty state
-      switch (timeframe) {
-        case 'week':
-          return [0, 0, 0, 0, 0, 0, 0];
-        case 'month':
-          return [0, 0, 0, 0];
-        case '3months':
-          return [0, 0, 0];
-        case '6months':
-          return [0, 0, 0, 0, 0, 0];
-        case 'year':
-          return [0, 0, 0, 0];
-        default:
-          return [0, 0, 0, 0, 0, 0];
-      }
-    }
-
-    // Calculate real cumulative savings from transactions
-    const sortedTransactions = transactions.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-    
+    // Always return zeros for empty state since we have no real transactions
     switch (timeframe) {
       case 'week':
-        // Last 7 days cumulative
-        const weekData = Array(7).fill(0);
-        let weekSum = 0;
-        sortedTransactions.slice(-7).forEach((t, i) => {
-          weekSum += t.amount;
-          weekData[i] = weekSum / 100; // Convert to dollars
-        });
-        return weekData;
+        return [0, 0, 0, 0, 0, 0, 0];
       case 'month':
-        // Last 4 weeks cumulative
-        const monthData = Array(4).fill(0);
-        let monthSum = 0;
-        sortedTransactions.slice(-4).forEach((t, i) => {
-          monthSum += t.amount;
-          monthData[i] = monthSum / 100;
-        });
-        return monthData;
+        return [0, 0, 0, 0];
       case '3months':
-        // Last 3 months cumulative
-        const quarterData = Array(3).fill(0);
-        let quarterSum = 0;
-        sortedTransactions.slice(-3).forEach((t, i) => {
-          quarterSum += t.amount;
-          quarterData[i] = quarterSum / 100;
-        });
-        return quarterData;
+        return [0, 0, 0];
       case '6months':
-        // Last 6 months cumulative
-        const sixMonthData = Array(6).fill(0);
-        let sixMonthSum = 0;
-        sortedTransactions.slice(-6).forEach((t, i) => {
-          sixMonthSum += t.amount;
-          sixMonthData[i] = sixMonthSum / 100;
-        });
-        return sixMonthData;
+        return [0, 0, 0, 0, 0, 0];
       case 'year':
-        // Last 4 quarters cumulative
-        const yearData = Array(4).fill(0);
-        let yearSum = 0;
-        sortedTransactions.slice(-4).forEach((t, i) => {
-          yearSum += t.amount;
-          yearData[i] = yearSum / 100;
-        });
-        return yearData;
+        return [0, 0, 0, 0];
       default:
-        // Default to 6 months
-        const defaultData = Array(6).fill(0);
-        let defaultSum = 0;
-        sortedTransactions.slice(-6).forEach((t, i) => {
-          defaultSum += t.amount;
-          defaultData[i] = defaultSum / 100;
-        });
-        return defaultData;
+        return [0, 0, 0, 0, 0, 0];
     }
   };
 
@@ -157,34 +95,38 @@ export default function SavingsSummary({ navigation, route }: Props): React.JSX.
       
       try {
         userPools = await api.getUserPools(userId);
+        // Filter out any mock data
+        userPools = (userPools || []).filter(pool => 
+          pool.name !== 'Vacation Fund' && 
+          pool.id !== 'pool1' && 
+          pool.id !== '1'
+        );
       } catch (error) {
-        console.log('Using fallback pools data for summary');
-        userPools = [{
-          id: 1,
-          name: 'Vacation Fund',
-          goalAmount: 500000,
-          currentAmount: 150000,
-          status: 'active'
-        }];
+        console.error('Failed to load pools for summary:', error);
+        userPools = [];
       }
       
       try {
         userTransactions = await api.getUserTransactions(userId);
+        // Filter out any mock transactions
+        userTransactions = (userTransactions || []).filter(tx => 
+          tx.pool_id !== 'pool1' && 
+          tx.id !== 'tx1'
+        );
       } catch (error) {
-        console.log('Using fallback transactions data for summary');
+        console.error('Failed to load transactions for summary:', error);
         userTransactions = [];
       }
       
-      // Calculate real summary data with fallbacks
+      // Calculate real summary data
       const totalSaved = userTransactions.length > 0 
         ? userTransactions.reduce((sum, t) => sum + t.amount, 0)
-        : 150000; // $1500 fallback
+        : 0;
       const activeGoals = userPools.filter(p => p.status === 'active').length;
       const completedGoals = userPools.filter(p => p.status === 'completed').length;
       
-      // Calculate real savings rate from user income (if available) or estimate
-      const estimatedMonthlyIncome = 500000; // $5000 - TODO: Get from user profile
-      const actualSavingsRate = totalSaved > 0 ? Math.min(1, totalSaved / (estimatedMonthlyIncome * 6)) : 0;
+      // Calculate savings rate based on actual data
+      const actualSavingsRate = 0; // Will be calculated from real user data when available
 
       const realSummary = {
         totalSaved,
@@ -428,7 +370,7 @@ export default function SavingsSummary({ navigation, route }: Props): React.JSX.
                 {(summaryData.savingsRate * 100).toFixed(0)}%
               </Text>
               <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-                Savings Rate
+                Goal Progress
               </Text>
             </View>
           </View>

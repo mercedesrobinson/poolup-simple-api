@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions, Alert } from 'react-native';
 import { colors, radius } from '../theme';
 import { api } from '../services/api';
+import { useUser } from '../contexts/UserContext';
 
 function StatCard({ title, value, subtitle, color = colors.blue }) {
   return (
@@ -134,44 +135,34 @@ const styles = {
 };
 
 export default function Profile({ navigation, route }: any) {
-  const { user } = route?.params || {};
-  const [profile, setProfile] = useState({
-    name: 'Mercedes',
-    xp: 150,
-    total_points: 250,
-    current_streak: 3,
-    badge_count: 2,
-    avatar_type: 'default',
-    avatar_data: null
-  });
-  const [badges, setBadges] = useState([
-    { id: 1, name: 'First Pool', icon: '🎯', earned_at: '2024-01-15' },
-    { id: 2, name: 'Streak Master', icon: '🔥', earned_at: '2024-01-20' }
-  ]);
-  const [card, setCard] = useState({
-    last_four: '4242',
-    balance_cents: 15000,
-    status: 'active'
-  });
+  const { user } = useUser();
+  const [profile, setProfile] = useState(null);
+  const [badges, setBadges] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const loadProfile = async () => {
+    if (!user?.id) return;
+    
     try {
-      // Profile data is already set in state, no need to load
-      return;
+      setLoading(true);
+      setError(null);
+      
+      const [profileData, badgesData] = await Promise.all([
+        api.getUserProfile(user.id),
+        api.getUserBadges(user.id)
+      ]);
+      
+      setProfile(profileData);
+      setBadges(badgesData || []);
     } catch (error) {
       console.error('Failed to load profile:', error);
+      setError('Failed to load profile data');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const createCard = async () => {
-    try {
-      const newCard = await api.createDebitCard(user.id, user.name);
-      setCard(newCard);
-      Alert.alert('Success!', 'Your PoolUp debit card has been created! 🎉');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to create debit card');
-    }
-  };
 
   useEffect(() => {
     if (user) {
@@ -179,11 +170,10 @@ export default function Profile({ navigation, route }: any) {
     }
   }, [user]);
 
-  // Always show profile with mock data if no user
   const displayProfile = user || {
     id: '1756612920173',
-    name: 'Mercedes',
-    email: 'mercedes@example.com'
+    name: 'Guest User',
+    email: 'guest@poolup.com'
   };
 
   const ProfileOption = ({ icon, title, subtitle, onPress }: {
@@ -311,7 +301,7 @@ export default function Profile({ navigation, route }: any) {
                   justifyContent: 'center',
                   marginBottom: 8
                 }}>
-                  <Text style={{ fontSize: 24, fontWeight: '800', color: colors.primary }}>3</Text>
+                  <Text style={{ fontSize: 24, fontWeight: '800', color: colors.primary }}>0</Text>
                 </View>
                 <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>Active</Text>
                 <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>Pools</Text>
@@ -329,7 +319,7 @@ export default function Profile({ navigation, route }: any) {
                 }}>
                   <Text style={{ fontSize: 20 }}>🔥</Text>
                 </View>
-                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>14 Day</Text>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>0 Day</Text>
                 <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>Streak</Text>
               </View>
               
@@ -343,7 +333,7 @@ export default function Profile({ navigation, route }: any) {
                   justifyContent: 'center',
                   marginBottom: 8
                 }}>
-                  <Text style={{ fontSize: 24, fontWeight: '800', color: colors.green }}>2</Text>
+                  <Text style={{ fontSize: 24, fontWeight: '800', color: colors.green }}>{badges?.filter(b => b.earned)?.length || 0}</Text>
                 </View>
                 <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>Badges</Text>
                 <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>Earned</Text>
@@ -359,7 +349,7 @@ export default function Profile({ navigation, route }: any) {
                   justifyContent: 'center',
                   marginBottom: 8
                 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '800', color: colors.purple }}>$2.1k</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: colors.purple }}>$0</Text>
                 </View>
                 <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>Total</Text>
                 <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>Saved</Text>
@@ -451,54 +441,32 @@ export default function Profile({ navigation, route }: any) {
     );
   };
 
-  if (!profile) {
-    // Show loading state with basic user info
+  if (loading) {
     return (
-      <ScrollView style={{ flex: 1, backgroundColor: '#FAFCFF' }}>
-        <View style={{ padding: 24, backgroundColor: colors.purple, paddingTop: 80 }}>
-          <View style={{ alignItems: 'center' }}>
-            <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-              <Text style={{ fontSize: 32, color: 'white' }}>👤</Text>
-            </View>
-            <Text style={{ fontSize: 24, fontWeight: '700', color: 'white', marginBottom: 8 }}>{displayProfile.name}</Text>
-            <Text style={{ fontSize: 16, color: 'rgba(255,255,255,0.8)' }}>Level 1</Text>
-          </View>
-        </View>
-        
-        <View style={{ padding: 24 }}>
-          <View style={{ flexDirection: 'row', marginBottom: 16 }}>
-            <View style={{ backgroundColor: 'white', padding: 16, borderRadius: radius.medium, flex: 1, marginHorizontal: 4 }}>
-              <Text style={{ fontSize: 24, fontWeight: '800', color: colors.purple, textAlign: 'center' }}>0</Text>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text, textAlign: 'center', marginTop: 4 }}>Points</Text>
-            </View>
-            <View style={{ backgroundColor: 'white', padding: 16, borderRadius: radius.medium, flex: 1, marginHorizontal: 4 }}>
-              <Text style={{ fontSize: 24, fontWeight: '800', color: colors.coral, textAlign: 'center' }}>0🔥</Text>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text, textAlign: 'center', marginTop: 4 }}>Streak</Text>
-            </View>
-            <View style={{ backgroundColor: 'white', padding: 16, borderRadius: radius.medium, flex: 1, marginHorizontal: 4 }}>
-              <Text style={{ fontSize: 24, fontWeight: '800', color: colors.green, textAlign: 'center' }}>0</Text>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text, textAlign: 'center', marginTop: 4 }}>Badges</Text>
-            </View>
-          </View>
-          
-          <View style={{ backgroundColor: 'white', padding: 16, borderRadius: radius.medium }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 12 }}>Quick Actions</Text>
-            <TouchableOpacity 
-              onPress={() => navigation.navigate("Pools" as any, { user: displayProfile })}
-              style={{ backgroundColor: colors.green, padding: 12, borderRadius: radius.medium, marginBottom: 8 }}
-            >
-              <Text style={{ color: 'white', fontWeight: '700', textAlign: 'center' }}>View Pools</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={() => navigation.navigate("CreatePool" as any, { user: displayProfile })}
-              style={{ backgroundColor: colors.purple, padding: 12, borderRadius: radius.medium }}
-            >
-              <Text style={{ color: 'white', fontWeight: '700', textAlign: 'center' }}>Create New Pool</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
+      <View style={{ flex: 1, backgroundColor: '#FAFCFF', justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: 18, color: colors.text }}>Loading profile...</Text>
+      </View>
     );
+  }
+
+  if (error) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#FAFCFF', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <Text style={{ fontSize: 48, marginBottom: 16 }}>⚠️</Text>
+        <Text style={{ fontSize: 18, fontWeight: '600', color: colors.text, marginBottom: 8, textAlign: 'center' }}>Unable to load profile</Text>
+        <Text style={{ fontSize: 14, color: '#666', marginBottom: 16, textAlign: 'center' }}>{error}</Text>
+        <TouchableOpacity 
+          onPress={loadProfile}
+          style={{ backgroundColor: colors.primary, padding: 12, borderRadius: radius.medium }}
+        >
+          <Text style={{ color: 'white', fontWeight: '600' }}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!profile) {
+    return showProfile();
   }
 
   const level = Math.floor((profile?.xp || 0) / 100) + 1;

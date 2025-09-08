@@ -46,8 +46,7 @@ const Friends: React.FC<FriendsProps> = ({ navigation, route }) => {
       const response = await api.getUserFriends(userId);
       setFriends(response.data || []);
     } catch (error) {
-      console.log('Load friends error:', error);
-      // Fallback to empty state
+      console.error('Load friends error:', error);
       setFriends([]);
     }
   };
@@ -57,8 +56,7 @@ const Friends: React.FC<FriendsProps> = ({ navigation, route }) => {
       const response = await api.getFriendRequests(userId);
       setFriendRequests(response.data || []);
     } catch (error) {
-      console.log('Load friend requests error:', error);
-      // Fallback to empty state
+      console.error('Load friend requests error:', error);
       setFriendRequests([]);
     }
   };
@@ -74,8 +72,9 @@ const Friends: React.FC<FriendsProps> = ({ navigation, route }) => {
       await api.sendFriendRequest(userId, searchEmail.trim());
       Alert.alert('Success', 'Friend request sent!');
       setSearchEmail('');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to send friend request');
+      loadFriendRequests(); // Refresh requests
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to send friend request');
     } finally {
       setLoading(false);
     }
@@ -119,8 +118,11 @@ const Friends: React.FC<FriendsProps> = ({ navigation, route }) => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([loadFriends(), loadFriendRequests()]);
-    setRefreshing(false);
+    try {
+      await Promise.all([loadFriends(), loadFriendRequests()]);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const renderFriend = ({ item }: { item: Friend }) => (

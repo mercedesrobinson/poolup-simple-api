@@ -24,11 +24,11 @@ export const BadgeGallery: React.FC<BadgeGalleryProps> = ({
         const allBadges = BadgeSystem.getAllBadges();
         console.log('BadgeGallery loading badges:', allBadges.slice(0, 2).map(b => ({ name: b.name, description: b.description })));
         
-        // Mark first 2 badges as earned for demo
-        const badgesWithEarnedStatus = allBadges.map((badge, index) => ({
+        // No badges earned initially - real user progress
+        const badgesWithEarnedStatus = allBadges.map((badge) => ({
           ...badge,
-          earned: index < 2,
-          earnedAt: index < 2 ? new Date().toISOString() : undefined
+          earned: false,
+          earnedAt: undefined
         }));
         
         setAllBadges(badgesWithEarnedStatus);
@@ -61,7 +61,7 @@ export const BadgeGallery: React.FC<BadgeGalleryProps> = ({
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Badge Collection</Text>
+        <Text style={styles.title}>Badges</Text>
         <Text style={styles.progress}>
           {earnedCount}/{totalCount} Earned
         </Text>
@@ -95,15 +95,27 @@ export const BadgeGallery: React.FC<BadgeGalleryProps> = ({
 
       {/* Badge Grid */}
       <ScrollView style={styles.badgeGrid}>
-        <View style={styles.badgeRow}>
-          {filteredBadges.map((badge, index) => (
-            <BadgeCard
-              key={badge.id}
-              badge={badge}
-              onPress={() => onBadgePress?.(badge)}
-            />
-          ))}
-        </View>
+        {filteredBadges.length > 0 ? (
+          <View style={styles.badgeRow}>
+            {filteredBadges.map((badge, index) => (
+              <BadgeCard
+                key={badge.id}
+                badge={badge}
+                onPress={() => onBadgePress?.(badge)}
+              />
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={{ fontSize: 48, marginBottom: 12 }}>🏆</Text>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 8, textAlign: 'center' }}>
+              No Badges Earned Yet
+            </Text>
+            <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: 'center' }}>
+              Start saving and creating pools to earn your first badges!
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -115,16 +127,17 @@ interface BadgeCardProps {
 }
 
 const BadgeCard: React.FC<BadgeCardProps> = ({ badge, onPress }) => {
-  const getBadgeProgress = (badge: Badge) => {
-    // Mock user progress - in real app this would come from props or API
-    const mockProgress = {
-      friendsInvited: 2,
-      poolsCreated: 1,
-      totalSaved: 50000, // $500 in cents
-      largestGroupSize: 3,
-      totalGroupSavings: 150000 // $1500 in cents
+  const getUserProgress = (badge) => {
+    // Real progress data - will be replaced with actual user data
+    const userProgress = {
+      friendsCount: 0,
+      poolsCreated: 0,
+      totalSaved: 0,
+      largestGroupSize: 0,
+      totalGroupSavings: 0,
+      friendsInvited: 0
     };
-    return BadgeSystem.getBadgeProgress(badge, mockProgress);
+    return BadgeSystem.getBadgeProgress(badge, userProgress);
   };
 
   const getRarityColors = (rarity: string) => {
@@ -167,7 +180,7 @@ const BadgeCard: React.FC<BadgeCardProps> = ({ badge, onPress }) => {
     }
   };
 
-  const progress = getBadgeProgress(badge);
+  const progress = getUserProgress(badge);
   const rarityColors = getRarityColors(badge.rarity);
 
   return (
@@ -432,5 +445,11 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     textTransform: 'uppercase',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
   },
 });

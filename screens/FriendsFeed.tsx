@@ -49,51 +49,8 @@ export default function FriendsFeed({ navigation, route }: Props): React.JSX.Ele
       setActivities(Array.isArray(feedData) ? feedData : []);
     } catch (error) {
       console.error('Failed to load friends feed:', error);
-      // Mock data for development
-      setActivities([
-        {
-          id: 1,
-          type: 'contribution',
-          user: { name: 'Sarah', avatar: '👩‍💼' },
-          pool: { name: 'Bali Adventure', destination: 'Bali' },
-          amount: 15000, // cents
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          isPublic: true
-        },
-        {
-          id: 2,
-          type: 'milestone',
-          user: { name: 'Mike', avatar: '👨‍💻' },
-          pool: { name: 'Tokyo Trip', destination: 'Tokyo' },
-          milestone: 50,
-          timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-          isPublic: true
-        },
-        {
-          id: 3,
-          type: 'streak',
-          user: { name: 'Emma', avatar: '👩‍🎨' },
-          streakDays: 14,
-          timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-          isPublic: true
-        },
-        {
-          id: 4,
-          type: 'goal_created',
-          user: { name: 'Alex', avatar: '👨‍🚀' },
-          pool: { name: 'Emergency Fund', destination: 'Financial Security' },
-          timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-          isPublic: true
-        },
-        {
-          id: 5,
-          type: 'encouragement',
-          user: { name: 'Lisa', avatar: '👩‍🎓' },
-          message: 'Keep up the great work on your savings goals! 💪',
-          timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-          isPublic: true
-        }
-      ]);
+      // No mock data - show empty state when API fails
+      setActivities([]);
     }
   };
 

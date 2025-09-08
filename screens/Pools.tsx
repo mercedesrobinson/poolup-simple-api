@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import { PoolCardSkeleton } from '../components/LoadingSkeleton';
 import { GoalCategoryBadge } from '../components/GoalCategories';
 import { BadgeGallery } from '../components/BadgeGallery';
+import { useUser } from '../contexts/UserContext';
 
 function PoolCard({ item, onPress }){
   // Handle pools without goals (open-ended saving)
@@ -104,98 +105,71 @@ function PoolCard({ item, onPress }){
   );
 }
 
-export default function Pools({ navigation, route }: any){
-  const [pools,setPools] = useState([]);
-  const [refreshing, setRefreshing] = useState(false);
+export default function Pools({ navigation, route }) {
+  const { user } = useUser();
+  const [pools, setPools] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [summaryData, setSummaryData] = useState({
-    totalSaved: 0,
-    activeGoals: 0,
-    completedGoals: 0,
-    currentStreak: 0,
-    monthlyAverage: 0,
-    savingsRate: 0,
-    nextMilestone: { amount: 10000, daysLeft: 30 }
-  });
-  const user = (route.params as any)?.user || { id: 1, name: 'Demo User' };
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
 
-  const load = async () => {
+  const loadPools = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+    
     try {
-      // Use fallback data to prevent API errors from blocking UI
-      const userId = user.id;
-      
-      // Try API calls with fallbacks
-      let userPools = [];
-      let userTransactions = [];
-      
-      try {
-        userPools = await api.getUserPools(userId);
-      } catch (error) {
-        console.log('Using fallback pools data');
-        userPools = [{
-          id: 1,
-          name: 'Vacation Fund',
-          goalAmount: 500000,
-          currentAmount: 150000,
-          status: 'active',
-          destination: 'Paris',
-          targetDate: '2025-06-01'
-        }];
-      }
-      
-      try {
-        userTransactions = await api.getUserTransactions(userId);
-      } catch (error) {
-        console.log('Using fallback transactions data');
-        userTransactions = [];
-      }
-      
-      const totalSaved = userTransactions.length > 0 
-        ? userTransactions.reduce((sum, t) => sum + t.amount, 0)
-        : 150000; // $1500 fallback
-      const activeGoals = userPools.filter(p => p.status === 'active').length;
-      const completedGoals = userPools.filter(p => p.status === 'completed').length;
-      
-      const realData = {
-        totalSaved,
-        activeGoals,
-        completedGoals,
-        currentStreak: 0,
-        monthlyAverage: totalSaved / 6,
-        savingsRate: 0.15,
-        nextMilestone: { amount: totalSaved + 50000, daysLeft: 30 }
-      };
-      setSummaryData(realData);
-      setPools(userPools.length > 0 ? userPools : []);
-      console.log('Pools screen loaded with real backend data');
+      setError(null);
+      const userPools = await api.getUserPools(user.id);
+      // Filter out any mock data (pools with "Vacation Fund" name or mock IDs)
+      const realPools = (userPools || []).filter(pool => 
+        pool.name !== 'Vacation Fund' && 
+        pool.id !== 'pool1' && 
+        pool.id !== '1'
+      );
+      setPools(realPools);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading pools:', error);
+      setError('Failed to load pools. Please try again.');
+      setPools([]);
     } finally {
-      setRefreshing(false);
       setLoading(false);
     }
   };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await load();
+    try {
+      await loadPools();
+    } finally {
+      setRefreshing(false);
+    }
   };
-  
+
   useEffect(() => {
-    load();
+    loadPools();
   }, []);
-  
-  useEffect(()=>{ const s = navigation.addListener('focus', load); return s; },[navigation]);
-  
+
+  useEffect(() => {
+    const s = navigation.addListener('focus', loadPools);
+    return s;
+  }, [navigation]);
+
   // Listen for refresh parameter
   useEffect(() => {
     if ((route.params as any)?.refresh) {
-      load();
+      loadPools();
     }
   }, [(route.params as any)?.refresh]);
 
   const getSavingsEquivalent = (amount) => {
     const amountInDollars = amount / 100;
+    
+    // Show motivational message for zero savings
+    if (amountInDollars === 0) {
+      return { text: `Start your savings journey today!`, icon: '🚀' };
+    }
+    
     const equivalents = [
       { threshold: 8000, text: `1 luxury trip to Medellin, Colombia`, icon: '🇨🇴' },
       { threshold: 6000, text: `1 week in Costa Rica paradise`, icon: '🌴' },
@@ -209,17 +183,41 @@ export default function Pools({ navigation, route }: any){
       { threshold: 1000, text: `${Math.floor(amountInDollars / 200)} weekend getaways`, icon: '🏖️' },
       { threshold: 500, text: `${Math.floor(amountInDollars / 150)} concert tickets`, icon: '🎵' },
       { threshold: 200, text: `${Math.floor(amountInDollars / 50)} fancy dinners`, icon: '🍽️' },
-      { threshold: 0, text: `${Math.floor(amountInDollars / 5)} coffee runs`, icon: '☕' }
+      { threshold: 1, text: `${Math.floor(amountInDollars / 5)} coffee runs`, icon: '☕' }
     ];
-    return equivalents.find(eq => amountInDollars >= eq.threshold) || equivalents[equivalents.length - 1];
+    return equivalents.find(eq => amountInDollars >= eq.threshold) || { text: `Start saving today!`, icon: '🚀' };
   };
 
-  const mockSummary = summaryData || {
-    totalSaved: 0,
-    activeGoals: 0,
-    currentStreak: 0,
-    savingsRate: 0
-  };
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#FAFCFF', justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: 18, color: colors.text }}>Loading your pools...</Text>
+      </View>
+    );
+  }
+
+  if (error && pools.length === 0) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#FAFCFF', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <Text style={{ fontSize: 48, marginBottom: 16 }}>⚠️</Text>
+        <Text style={{ fontSize: 18, fontWeight: '600', color: colors.text, marginBottom: 8, textAlign: 'center' }}>Unable to load pools</Text>
+        <Text style={{ fontSize: 14, color: '#666', marginBottom: 16, textAlign: 'center' }}>{error}</Text>
+        <TouchableOpacity 
+          onPress={loadPools}
+          style={{ backgroundColor: colors.primary, padding: 12, borderRadius: radius.medium, marginBottom: 8 }}
+        >
+          <Text style={{ color: 'white', fontWeight: '600' }}>Try Again</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          onPress={() => navigation.navigate('CreatePool', { user })}
+          style={{ backgroundColor: colors.green, padding: 12, borderRadius: radius.medium }}
+        >
+          <Text style={{ color: 'white', fontWeight: '600' }}>Create Your First Pool</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <ScrollView 
@@ -234,11 +232,12 @@ export default function Pools({ navigation, route }: any){
           Total Saved
         </Text>
         <Text style={{ color: 'white', fontSize: 48, fontWeight: '700', textAlign: 'center', marginBottom: 16 }}>
-          ${(mockSummary.totalSaved / 100).toFixed(2)}
+          ${(pools.reduce((sum, pool) => sum + (pool.saved_cents || 0), 0) / 100).toFixed(2)}
         </Text>
         
         {(() => {
-          const equivalent = getSavingsEquivalent(mockSummary.totalSaved);
+          const totalSaved = pools.reduce((sum, pool) => sum + (pool.saved_cents || 0), 0);
+          const equivalent = getSavingsEquivalent(totalSaved);
           return (
             <View style={{
               backgroundColor: 'rgba(255,255,255,0.2)',
@@ -276,7 +275,7 @@ export default function Pools({ navigation, route }: any){
           }}>
             <Text style={{ fontSize: 24, marginBottom: 4 }}>🎯</Text>
             <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text }}>
-              {mockSummary.activeGoals}
+              {pools.filter(p => p.status === 'active').length}
             </Text>
             <Text style={{ fontSize: 12, color: colors.textSecondary }}>
               Active Goals
@@ -297,7 +296,7 @@ export default function Pools({ navigation, route }: any){
           }}>
             <Text style={{ fontSize: 24, marginBottom: 4 }}>🔥</Text>
             <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text }}>
-              {mockSummary.currentStreak}
+              0
             </Text>
             <Text style={{ fontSize: 12, color: colors.textSecondary }}>
               Day Streak
@@ -318,10 +317,10 @@ export default function Pools({ navigation, route }: any){
           }}>
             <Text style={{ fontSize: 24, marginBottom: 4 }}>💪</Text>
             <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text }}>
-              {(mockSummary.savingsRate * 100).toFixed(0)}%
+              0%
             </Text>
             <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-              Savings Rate
+              Goal Progress
             </Text>
           </View>
         </View>
@@ -335,7 +334,6 @@ export default function Pools({ navigation, route }: any){
             <Text style={{ color:'white', fontWeight:'600', fontSize: 12 }}>👤 Profile</Text>
           </TouchableOpacity>
         </View>
-
 
         {/* Action Buttons */}
         <View style={{ flexDirection: 'row', marginBottom: 16, gap: 12 }}>
@@ -375,7 +373,7 @@ export default function Pools({ navigation, route }: any){
 
         {/* Pools List */}
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 12 }}>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: 12 }}>
             Your Pools
           </Text>
           {loading ? (

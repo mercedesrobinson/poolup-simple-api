@@ -509,22 +509,37 @@ export default function CreatePool({ navigation, route }: Props) {
     
     switch (fieldType) {
       case 'poolName':
+        // Match the selected category for both group and solo goals
         if (category === 'travel' && destination) {
           return `e.g., ${destination} Adventure 2024`;
         }
+        if (category === 'travel') {
+          return poolType === 'solo' ? 'e.g., Girls Trip' : 'e.g., Paris Trip 2024';
+        }
         if (category === 'wedding') {
-          return `e.g., Sarah & Mike's Wedding Fund`;
+          return poolType === 'solo' ? 'e.g., Wedding Savings' : 'e.g., Jordan & Alex\'s Wedding Fund';
         }
         if (category === 'home') {
-          return `e.g., Our Dream Home Fund`;
+          return poolType === 'solo' ? 'e.g., Home Down Payment' : 'e.g., Our Dream Home Fund';
         }
         if (category === 'car') {
-          return `e.g., Tesla Model 3 Fund`;
+          return poolType === 'solo' ? 'e.g., Car Purchase Fund' : 'e.g., Tesla Model 3 Fund';
         }
         if (category === 'emergency') {
-          return `e.g., Family Emergency Fund`;
+          return 'e.g., Family Emergency Fund';
         }
-        return poolType === 'solo' ? 'e.g., Emergency Fund' : 'e.g., Paris Trip 2024';
+        if (category === 'education') {
+          return poolType === 'solo' ? 'e.g., City College of New York' : 'e.g., College Fund';
+        }
+        if (category === 'technology') {
+          return poolType === 'solo' ? 'e.g., New Macbook' : 'e.g., Tech Upgrade Fund';
+        }
+        if (category === 'business') {
+          return poolType === 'solo' ? 'e.g., New PoolUp Wannabe' : 'e.g., Startup Fund';
+        }
+        
+        // Default fallback
+        return poolType === 'solo' ? 'e.g., Personal Savings Goal' : 'e.g., Group Savings Goal';
         
       case 'goalAmount':
         if (category === 'travel') {
@@ -722,7 +737,10 @@ export default function CreatePool({ navigation, route }: Props) {
       }
     }
     
-    if (goalAmount <= 0 || members <= 0) return null;
+    // For solo goals, use 1 member
+    const effectiveMembers = poolType === 'solo' ? 1 : members;
+    
+    if (goalAmount <= 0 || effectiveMembers <= 0) return null;
     
     // Only show calculator if we have a valid target date
     if (!isValidDate || !targetDate) return null;
@@ -731,11 +749,11 @@ export default function CreatePool({ navigation, route }: Props) {
     const diffTime = targetDate.getTime() - today.getTime();
     const monthsRemaining = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30.44))); // Average days per month
     
-    const perPersonPerMonth = goalAmount / members / monthsRemaining;
+    const perPersonPerMonth = goalAmount / effectiveMembers / monthsRemaining;
     
     return {
       totalGoal: goalAmount,
-      members: members,
+      members: effectiveMembers,
       monthsRemaining: monthsRemaining,
       perPersonPerMonth: perPersonPerMonth,
       targetDate: targetDate,
@@ -1605,8 +1623,8 @@ export default function CreatePool({ navigation, route }: Props) {
         )}
 
 
-        {/* Smart Calculator - moved here after target date */}
-        {poolType === 'group' && (
+        {/* Smart Calculator - works for both group and solo goals */}
+        {(poolType === 'group' || poolType === 'solo') && (
           <View 
             key={calculatorKey}
             style={{ 

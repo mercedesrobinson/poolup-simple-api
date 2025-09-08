@@ -29,9 +29,17 @@
       "versionCode": 1
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
-    "plugins": [],
+    "extra": {
+      "eas": {
+        "projectId": "poolup-mvp"
+      }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ],
     "sdkVersion": "53.0.0"
   }
 }
