@@ -18,15 +18,7 @@ const mockFriends = [
   { id: '2', name: 'Mike Rodriguez', email: 'mike@example.com', streak_days: 8 }
 ];
 
-const mockPools = [
-  { 
-    id: '1', 
-    name: 'Vacation Fund', 
-    goal_cents: 500000, 
-    saved_cents: 150000,
-    created_by: '1'
-  }
-];
+const mockPools = [];
 
 // Health check
 app.get('/', (req, res) => {
@@ -44,7 +36,11 @@ app.get('/api/users/:userId', (req, res) => {
 });
 
 app.get('/api/users/:userId/pools', (req, res) => {
-  res.json(mockPools);
+  res.json([]);
+});
+
+app.get('/api/users/:userId/transactions', (req, res) => {
+  res.json([]);
 });
 
 app.post('/api/pools', (req, res) => {
@@ -95,8 +91,11 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
-app.listen(PORT, () => {
-  console.log(`PoolUp API server running on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
 
 module.exports = app;
+// Force redeploy
